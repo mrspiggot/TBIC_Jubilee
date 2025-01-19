@@ -170,7 +170,7 @@ class PortfolioController:
                         new_row = fund_row.copy()
                         new_row['sector'] = mapped_sector
                         new_row['value_in_base'] = distributed_value
-                        distributed_df = distributed_df.append(new_row, ignore_index=True)
+                        distributed_df = pd.concat([distributed_df, pd.DataFrame([new_row])], ignore_index=True)
 
             except Exception as e:
                 self.logger.error(f"Error processing fund {fund_row['ticker']}: {str(e)}")

@@ -10,6 +10,7 @@ from app.controllers.portfolio_controller import PortfolioController
 from app.views.portfolio_view import PortfolioView
 from app.views.sunburst_view import SunburstView
 from app.views.treemap_view import TreemapView
+from app.views.performance_view import PerformanceView
 
 # Configure page
 st.set_page_config(
@@ -28,7 +29,8 @@ view = PortfolioView()
 view.render_sidebar(controller)
 
 # Create tabs
-tab_portfolio, tab_composition, tab_concentration = st.tabs(["Portfolio", "Composition", "Concentration"])
+tab_portfolio, tab_composition, tab_concentration, tab_performance = st.tabs(["Portfolio", "Composition", "Concentration", "Performance"])
+
 
 with tab_portfolio:
     # Render main content
@@ -53,3 +55,13 @@ with tab_concentration:
 
     # Render Treemap tab
     treemap_view.render_treemap_tab(portfolio)
+
+with tab_performance:
+    # Initialize Performance view
+    performance_view = PerformanceView()
+
+    # Get current portfolio
+    portfolio = controller.get_portfolio()
+
+    # Render Performance tab
+    performance_view.render(portfolio)
