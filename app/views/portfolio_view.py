@@ -8,14 +8,16 @@ class PortfolioView:
 
     def render_sidebar(self, controller: PortfolioController) -> None:
         """Render the sidebar with upload controls and portfolio settings."""
+        st.sidebar.image('app/assets/lucidate.png', width=200)
         st.sidebar.title("Portfolio Controls")
 
         # File upload section with format explanation
         st.sidebar.markdown("### Upload Portfolio")
         st.sidebar.markdown("""
         Upload an Excel file with your portfolio data. in the following format
-        - Required columns: `ticker`, **must** be from Yahoo Finance; & `quantity`
-        - Currency, Industry, Sector and type data will be automatically enriched
+        Required columns: 
+        - `ticker`, **must** be from Yahoo Finance 
+        - `quantity`
 
         """)
 
@@ -27,7 +29,7 @@ class PortfolioView:
         base_currency = st.sidebar.selectbox(
             "Base Currency",
             options=controller.get_available_currencies(),
-            index=1  # GBP default
+            index=2  # GBP default
         )
 
         cash = st.sidebar.number_input(
@@ -177,4 +179,6 @@ class PortfolioView:
                 })
 
             # Display sector allocation table
-            st.table(pd.DataFrame(alloc_data))
+            st.dataframe(data=pd.DataFrame(alloc_data),
+                column_config=column_config,
+                hide_index=True)

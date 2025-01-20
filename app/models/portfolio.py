@@ -3,6 +3,7 @@ import pandas as pd
 from utils.fx_manager import FxManager
 from utils.stock_provider import YFinanceProvider
 from .stock import Stock
+import datetime
 
 
 class Portfolio:
@@ -86,6 +87,21 @@ class Portfolio:
 
         # Sort by value in base currency descending
         return df.sort_values('value_in_base', ascending=False)
+
+    # Add this method to the Portfolio class
+    # Add this method to the Portfolio class if it doesn't exist
+    def get_historical_values(self, start_date: datetime, end_date: datetime) -> pd.Series:
+        historical_data = self.stock_provider.get_historical_data_multiple(
+            list(self.positions.keys()), start=start_date, end=end_date
+        )
+        portfolio_values = pd.Series(index=historical_data.index, dtype=float)
+        for date, row in historical_data.iterrows():
+            total_value = sum(
+                row[symbol] * position.quantity * self.fx_manager.get_rate(position.currency, self.base_currency)
+                for symbol, position in self.positions.items()
+            )
+            portfolio_values[date] = total_value
+        return portfolio_values
 
     @classmethod
     def from_dataframe(

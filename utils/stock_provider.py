@@ -51,24 +51,12 @@ class YFinanceProvider(StockDataProvider):
         info = ticker.info
 
         # Log raw sector/industry data for debugging
-        logger.debug(f"YFinance raw data for {symbol}:")
-        logger.debug(f"  sector: {info.get('sector')}")
-        logger.debug(f"  industry: {info.get('industry')}")
+        # logger.debug(f"YFinance raw data for {symbol}:")
+        # logger.debug(f"  sector: {info.get('sector')}")
+        # logger.debug(f"  industry: {info.get('industry')}")
 
         return info
 
-    # @with_backoff()
-    # def get_fund_info(self, symbol: str) -> Dict[str, Any]:
-    #     """Fetch the ticker info from yfinance."""
-    #     info = yf.Ticker(symbol).funds_data
-    #
-    #
-    #     # Log raw sector/industry data for debugging
-    #     logger.debug(f"YFinance raw data for {symbol}:")
-    #     logger.debug(f"  sector: {info.get('sector')}")
-    #     logger.debug(f"  industry: {info.get('industry')}")
-    #
-    #     return info
 
     def _get_ticker_info(self, symbol: str) -> Dict[str, Any]:
         """Get ticker info with caching and rate limiting."""
@@ -89,7 +77,7 @@ class YFinanceProvider(StockDataProvider):
         sector = info.get('sector', '')
         industry = info.get('industry', '')
 
-        logger.debug(f"Sector data for {symbol}: sector='{sector}', industry='{industry}'")
+        # logger.debug(f"Sector data for {symbol}: sector='{sector}', industry='{industry}'")
 
         return {
             'sector': sector,
@@ -124,10 +112,10 @@ class YFinanceProvider(StockDataProvider):
             if price is None:
                 price = info.get('currentPrice')
                 if price is None:
-                    logger.warning(
-                        f"No 'currentPrice' found for {symbol}, "
-                        f"trying fallback keys..."
-                    )
+                    # logger.warning(
+                    #     f"No 'currentPrice' found for {symbol}, "
+                    #     f"trying fallback keys..."
+                    # )
                     price = info.get('regularMarketPreviousClose') or info.get('previousClose')
             if price is None:
                 logger.warning(
@@ -175,7 +163,35 @@ class YFinanceProvider(StockDataProvider):
             )
             return pd.DataFrame()
 
-    def get_historical_data_multiple(
+    # Add or update this method in the YFinanceProvider class
+    def get_historical_data_multiple(self, symbols: List[str], start: datetime, end: datetime) -> pd.DataFrame:
+        data = yf.download(symbols, start=start, end=end)
+
+        # If we have a MultiIndex DataFrame, prioritize 'Adj Close', fall back to 'Close'
+        if isinstance(data.columns, pd.MultiIndex):
+            if 'Adj Close' in data.columns.levels[0]:
+                price_data = data['Adj Close']
+            elif 'Close' in data.columns.levels[0]:
+                price_data = data['Close']
+                logging.warning(
+                    "Using 'Close' prices instead of 'Adj Close'. Results may be affected by stock splits and dividends.")
+            else:
+                raise ValueError("Neither 'Adj Close' nor 'Close' columns found in the downloaded data")
+        else:
+            # If it's not a MultiIndex, assume it's a single ticker and try to get 'Adj Close' or 'Close'
+            if 'Adj Close' in data.columns:
+                price_data = data['Adj Close']
+            elif 'Close' in data.columns:
+                price_data = data['Close']
+                logging.warning(
+                    "Using 'Close' prices instead of 'Adj Close'. Results may be affected by stock splits and dividends.")
+            else:
+                raise ValueError("Neither 'Adj Close' nor 'Close' columns found in the downloaded data")
+
+        # Forward fill and drop any remaining NaN values
+        return price_data.ffill().dropna()
+
+    def get_historical_data_multiple_old(
             self,
             symbols: List[str],
             start: Optional[datetime] = None,
@@ -186,10 +202,10 @@ class YFinanceProvider(StockDataProvider):
         Fetch historical OHLC data for multiple tickers.
         Returns DataFrame with columns = ticker symbols.
         """
-        logger.info(
-            f"Fetching multiple tickers: {symbols}, "
-            f"from {start} to {end}, auto_adjust={auto_adjust}"
-        )
+        # logger.info(
+        #     f"Fetching multiple tickers: {symbols}, "
+        #     f"from {start} to {end}, auto_adjust={auto_adjust}"
+        # )
 
         if not symbols:
             return pd.DataFrame()

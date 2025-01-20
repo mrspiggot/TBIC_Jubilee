@@ -11,6 +11,7 @@ from app.views.portfolio_view import PortfolioView
 from app.views.sunburst_view import SunburstView
 from app.views.treemap_view import TreemapView
 from app.views.performance_view import PerformanceView
+from app.views.benchmark_view import BenchmarkView
 
 # Configure page
 st.set_page_config(
@@ -29,7 +30,9 @@ view = PortfolioView()
 view.render_sidebar(controller)
 
 # Create tabs
-tab_portfolio, tab_composition, tab_concentration, tab_performance = st.tabs(["Portfolio", "Composition", "Concentration", "Performance"])
+tab_portfolio, tab_composition, tab_concentration, tab_performance, tab_benchmark = st.tabs([
+    "Portfolio", "Composition", "Concentration", "Performance", "Benchmark"
+])
 
 
 with tab_portfolio:
@@ -65,3 +68,7 @@ with tab_performance:
 
     # Render Performance tab
     performance_view.render(portfolio)
+
+with tab_benchmark:
+    benchmark_view = BenchmarkView()
+    benchmark_view.render(portfolio)
