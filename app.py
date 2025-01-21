@@ -12,6 +12,7 @@ from app.views.sunburst_view import SunburstView
 from app.views.treemap_view import TreemapView
 from app.views.performance_view import PerformanceView
 from app.views.benchmark_view import BenchmarkView
+from app.views.peer_analysis_view import PeerAnalysisView
 
 # Configure page
 st.set_page_config(
@@ -30,8 +31,8 @@ view = PortfolioView()
 view.render_sidebar(controller)
 
 # Create tabs
-tab_portfolio, tab_composition, tab_concentration, tab_performance, tab_benchmark = st.tabs([
-    "Portfolio", "Composition", "Concentration", "Performance", "Benchmark"
+tab_portfolio, tab_composition, tab_concentration, tab_performance, tab_benchmark, tab_peer = st.tabs([
+    "Portfolio", "Composition", "Concentration", "Performance", "Benchmark", "Peer Analysis"
 ])
 
 
@@ -72,3 +73,8 @@ with tab_performance:
 with tab_benchmark:
     benchmark_view = BenchmarkView()
     benchmark_view.render(portfolio)
+
+
+with tab_peer:
+    peer_analysis_view = PeerAnalysisView()
+    peer_analysis_view.render(portfolio)

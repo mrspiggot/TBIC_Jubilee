@@ -66,18 +66,15 @@ class YFinanceProvider(StockDataProvider):
         return self._cache[symbol]
 
     def get_sector_data(self, symbol: str) -> Dict[str, str]:
-        """
-        Get sector and industry data for a symbol.
-        Centralizes sector/industry extraction from YFinance.
-
-        Returns:
-            Dict containing 'sector' and 'industry' from YFinance
-        """
+        """Get sector and industry data for a symbol."""
         info = self.get_info(symbol)
         sector = info.get('sector', '')
         industry = info.get('industry', '')
 
-        # logger.debug(f"Sector data for {symbol}: sector='{sector}', industry='{industry}'")
+        # logger.info(f"[StockProvider] Raw YFinance data for {symbol}:")
+        # logger.info(f"  Full info keys: {list(info.keys())}")
+        # logger.info(f"  Sector: '{sector}'")
+        # logger.info(f"  Industry: '{industry}'")
 
         return {
             'sector': sector,
@@ -164,32 +161,51 @@ class YFinanceProvider(StockDataProvider):
             return pd.DataFrame()
 
     # Add or update this method in the YFinanceProvider class
-    def get_historical_data_multiple(self, symbols: List[str], start: datetime, end: datetime) -> pd.DataFrame:
-        data = yf.download(symbols, start=start, end=end)
+    def get_historical_data_multiple(
+            self,
+            symbols: List[str],
+            start: Optional[datetime] = None,
+            end: Optional[datetime] = None,
+            auto_adjust: bool = True
+    ) -> pd.DataFrame:
+        """
+        Fetch historical OHLC data for multiple tickers.
+        Returns DataFrame with columns = ticker symbols.
+        """
+        if not symbols:
+            return pd.DataFrame()
 
-        # If we have a MultiIndex DataFrame, prioritize 'Adj Close', fall back to 'Close'
-        if isinstance(data.columns, pd.MultiIndex):
-            if 'Adj Close' in data.columns.levels[0]:
-                price_data = data['Adj Close']
-            elif 'Close' in data.columns.levels[0]:
-                price_data = data['Close']
-                logging.warning(
-                    "Using 'Close' prices instead of 'Adj Close'. Results may be affected by stock splits and dividends.")
+        df_all = yf.download(
+            tickers=symbols,
+            start=start,
+            end=end,
+            progress=False,
+            group_by="column",
+            auto_adjust=auto_adjust
+        )
+
+        if df_all.empty:
+            logger.warning("No data returned for requested symbols.")
+            return pd.DataFrame()
+
+        # Handle multi-index case
+        if isinstance(df_all.columns, pd.MultiIndex):
+            close_col = "Adj Close" if auto_adjust else "Close"
+            if close_col in df_all.columns.levels[0]:
+                df_close = df_all.xs(close_col, level=0, axis=1)
             else:
-                raise ValueError("Neither 'Adj Close' nor 'Close' columns found in the downloaded data")
+                logger.warning(f"'{close_col}' not found. Using 'Close'")
+                df_close = df_all.xs("Close", level=0, axis=1)
         else:
-            # If it's not a MultiIndex, assume it's a single ticker and try to get 'Adj Close' or 'Close'
-            if 'Adj Close' in data.columns:
-                price_data = data['Adj Close']
-            elif 'Close' in data.columns:
-                price_data = data['Close']
-                logging.warning(
-                    "Using 'Close' prices instead of 'Adj Close'. Results may be affected by stock splits and dividends.")
-            else:
-                raise ValueError("Neither 'Adj Close' nor 'Close' columns found in the downloaded data")
+            # Single-level columns
+            df_close = df_all["Adj Close" if auto_adjust else "Close"]
 
-        # Forward fill and drop any remaining NaN values
-        return price_data.ffill().dropna()
+        if isinstance(df_close, pd.Series):
+            df_close = df_close.to_frame()
+
+        # Forward fill missing values
+        df_close.ffill(inplace=True)
+        return df_close
 
     def get_historical_data_multiple_old(
             self,

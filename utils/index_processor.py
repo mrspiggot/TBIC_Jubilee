@@ -37,7 +37,7 @@ class IndexComponentProcessor:
             tickers = df.iloc[:, 0].astype(str).tolist()
             # Clean tickers (remove any whitespace and convert to uppercase)
             tickers = [ticker.strip().upper() for ticker in tickers if isinstance(ticker, str) and ticker.strip()]
-            logger.info(f"Read {len(tickers)} tickers from {file_path.name}")
+            # logger.info(f"Read {len(tickers)} tickers from {file_path.name}")
             return tickers
         except Exception as e:
             logger.error(f"Error reading {file_path}: {str(e)}")
@@ -70,7 +70,7 @@ class IndexComponentProcessor:
     def process_file(self, file_path: Path) -> None:
         """Process a single index component file."""
         try:
-            logger.info(f"Processing {file_path.name}")
+            # logger.info(f"Processing {file_path.name}")
 
             # Read tickers
             tickers = self.read_tickers(file_path)
@@ -81,7 +81,7 @@ class IndexComponentProcessor:
             # Fetch data for each ticker
             stock_data = []
             for ticker in tickers:
-                logger.info(f"Fetching data for {ticker}")
+                # logger.info(f"Fetching data for {ticker}")
                 data = self.get_stock_data(ticker)
                 stock_data.append(data)
 
@@ -94,7 +94,7 @@ class IndexComponentProcessor:
 
             # Save to Excel
             df.to_excel(output_path, index=False)
-            logger.info(f"Saved data to {output_path}")
+            # logger.info(f"Saved data to {output_path}")
 
         except Exception as e:
             logger.error(f"Error processing {file_path.name}: {str(e)}")
@@ -107,7 +107,7 @@ class IndexComponentProcessor:
             logger.warning("No Excel files found in input directory")
             return
 
-        logger.info(f"Found {len(input_files)} files to process")
+        # logger.info(f"Found {len(input_files)} files to process")
 
         for file_path in input_files:
             self.process_file(file_path)
